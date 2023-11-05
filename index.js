@@ -8,6 +8,8 @@ class AnswerDatabase {
 		const file = fs.readFileSync(path).toString()
 		const lines = file.split("\n")
 
+		MessagePreparer.load()
+
 		this.answers = lines.map(e => new AnswerElement(e))
 	}
 
@@ -186,7 +188,24 @@ class MessageComparer {
 }
 
 class MessagePreparer {
+	static load(){
+		this.synonimousProvider = SynonimousProvider
+		this.synonimousProvider.load()
+	}
+
 	static processMessageBeforeComparation(input) {
+		let result = input
+		result = this.toLowerCase(result)
+		result = this.replaceLatin(result)
+		result = this.replaceLetters(result)
+		result = this.removeBackets(result)
+		result = this.deleteBadSymbols(result)
+		result = this.replaceSynonimous(result)
+
+		return result
+	}
+
+	static processWordBeforeComparation(input) {
 		let result = input
 		result = this.toLowerCase(result)
 		result = this.replaceLatin(result)
@@ -304,6 +323,96 @@ class MessagePreparer {
 		result = result.replaceAll(" +", " ")
 
 		return result
+	}
+
+	static replaceSynonimous(input){
+		let result = input
+		result = this.synonimousProvider.getAllMain(result)
+
+		return result
+	}
+}
+
+class SynonimousProvider {
+	synonimous = []
+	scopes = []
+	mainPhrases = new Map();
+
+	static load(){
+		const file = fs.readFileSync("./data/synonimous.txt").toString()
+		const lines = file.split("\n")
+		this.scopes = []
+		this.synonimous = []
+
+		for(let line of lines){
+			let scope = new Scope(line)
+			this.addScope(scope)
+		}
+	}
+
+	static getAllMain(text){
+		if(!this.mainPhrases){
+			this.mainPhrases = new Map()
+		}
+
+		if(this.mainPhrases.has(text)){
+			return this.mainPhrases.get(text)
+		}
+
+		const inStr = text;
+
+		for(let scope of this.scopes){
+			text = scope.replaceSynsByMain(text)
+		}
+
+		this.mainPhrases.set(inStr, text)
+
+		return text
+	}
+
+	static addScope(scope){
+		for(let scopeWord of this.scopes){
+			if(scopeWord.isSimillar(scope)){
+				scopeWord.complete(scope)
+				return;
+			}
+		}
+		this.scopes.push(scope)
+	}
+}
+
+class Scope {
+	constructor(scope){
+		let splitted = scope.split("\\")
+		this.words = splitted.map(e => MessagePreparer.processWordBeforeComparation(e))
+	}
+
+	isSimillar(scope){
+		for(let word of this.words){
+			for(let scopeWord of scope.words){
+				return word === scopeWord
+			}
+		}
+	}
+
+	complete(scope){
+		for(let word of scope.words){
+			if(!this.words.includes(word)){
+				this.words.push(word)
+			}
+		}
+	}
+
+	replaceSynsByMain(text){
+		const mainSyn = this.getMainSyn()
+		for(let word of this.words){
+			text = text.replace(word, mainSyn)
+		}
+		return text
+	}
+
+	getMainSyn(){
+		return this.words[0]
 	}
 }
 
