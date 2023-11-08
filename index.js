@@ -4,6 +4,13 @@ const unknown = require("./unknown.json")
 class AnswerDatabase {
 	answers = []
 
+	/**
+	 * iha-answerer
+	 * 
+	 * Болталка, вырезанная из приложения FP iHA bot. С панелькой обучения базы!
+	 * 
+	 * @param { String } path Путь до базы ответов.
+	 */
 	constructor(path) {
 		const file = fs.readFileSync(path).toString()
 		const lines = file.split("\n")
@@ -13,6 +20,12 @@ class AnswerDatabase {
 		this.answers = lines.map(e => new AnswerElement(e))
 	}
 
+	/**
+	 * Получить ответ из базы.
+	 * 
+	 * @param { String } message Запрос
+	 * @returns { String } Ответ
+	 */
 	getMaxValidAnswer(message) {
 		if (message.length == 0) {
 			return "Что?"
