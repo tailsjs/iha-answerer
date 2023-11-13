@@ -1,6 +1,0 @@
-{
-    "database": "/databases/answer_databse.bin",
-    "learning_server": {
-        "port": 1666
-    }
-}
