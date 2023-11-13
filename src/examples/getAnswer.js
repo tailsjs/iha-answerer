@@ -2,7 +2,7 @@ const AnswerDatabase = require("./src/index")
 
 const AnswerDB = new AnswerDatabase()
 
-const question = "Че как?"
+const question = "Привет!"
 
 console.log("Вопрос:", question)
 
